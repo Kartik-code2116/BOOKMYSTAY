@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Map from '../components/Map';
+import { reverseGeocode } from '../utils/googleMaps';
 
 function EditProperty() {
   const { id } = useParams();
@@ -120,22 +121,14 @@ function EditProperty() {
           longitude
         }));
 
-        // Reverse geocode with Google Geocoding API
         try {
-          const res = await fetch(
-            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=AIzaSyBXIQ9-geK0ai37e9eJdG-mM879QAzLXFQ`
-          );
-          const data = await res.json();
-          if (data && data.results && data.results.length > 0) {
-            const result = data.results[0];
-            const components = result.address_components || [];
-            const city = components.find(c => c.types.includes('locality'))?.long_name || '';
-            const country = components.find(c => c.types.includes('country'))?.long_name || '';
+          const locationInfo = await reverseGeocode(latitude, longitude);
+          if (locationInfo) {
             setFormData(prev => ({
               ...prev,
-              address: result.formatted_address || prev.address,
-              city: city || prev.city,
-              country: country || prev.country
+              address: locationInfo.address || prev.address,
+              city: locationInfo.city || prev.city,
+              country: locationInfo.country || prev.country
             }));
           }
         } catch (err) {

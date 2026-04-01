@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import PropertyCard from '../components/PropertyCard';
 import SearchBar from '../components/SearchBar';
+import PropertyMap from '../components/PropertyMap';
 
 function Home() {
+  const navigate = useNavigate();
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showMap, setShowMap] = useState(false);
 
   const fetchProperties = async (filters = {}) => {
     try {
@@ -61,9 +65,27 @@ function Home() {
           </div>
         ) : (
           <>
-            <h2 style={{ marginBottom: 'var(--spacing-lg)' }}>
-              {properties.length} Properties Available
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
+              <h2 style={{ marginBottom: 0 }}>
+                {properties.length} Properties Available
+              </h2>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowMap((prev) => !prev)}
+              >
+                {showMap ? 'Hide Map' : 'Show Map'}
+              </button>
+            </div>
+
+            {showMap && (
+              <div style={{ marginBottom: 'var(--spacing-xl)' }}>
+                <PropertyMap
+                  properties={properties}
+                  onMarkerClick={(property) => navigate(`/property/${property.id}`)}
+                />
+              </div>
+            )}
             <div className="grid grid-4">
               {properties.map(property => (
                 <PropertyCard key={property.id} property={property} />

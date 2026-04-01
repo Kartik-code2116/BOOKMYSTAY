@@ -7,7 +7,7 @@ const router = express.Router();
 // Get payout details (for receiving payments - Razorpay/bank info)
 router.get('/payout-details', authenticateToken, isHost, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('payout_details').lean();
+    const user = await User.findById(req.user.id);
     const payout_details = user?.payout_details ?? null;
     let data = {};
     if (payout_details) {

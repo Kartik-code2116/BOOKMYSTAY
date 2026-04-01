@@ -6,6 +6,12 @@ import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+// JWT Secret with fallback for development
+const jwtSecret = process.env.JWT_SECRET || 'default_jwt_secret_for_development_only';
+if (!process.env.JWT_SECRET) {
+  console.warn('Warning: JWT_SECRET not set in .env, using default (not secure for production)');
+}
+
 // Register new user
 router.post('/register', async (req, res) => {
   try {
@@ -39,9 +45,10 @@ router.post('/register', async (req, res) => {
     });
 
     // Generate JWT token
+
     const token = jwt.sign(
       { id: user.id, email, role: role || 'guest' },
-      process.env.JWT_SECRET,
+      jwtSecret,
       { expiresIn: '7d' }
     );
 
@@ -86,7 +93,7 @@ router.post('/login', async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
+      jwtSecret,
       { expiresIn: '7d' }
     );
 
@@ -110,15 +117,21 @@ router.post('/login', async (req, res) => {
 // Get current user profile
 router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
-      .select('id email name phone role avatar created_at')
-      .lean();
+    const user = await User.findById(req.user.id);
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json(user);
+    res.json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      phone: user.phone,
+      role: user.role,
+      avatar: user.avatar,
+      created_at: user.created_at
+    });
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -137,13 +150,12 @@ router.post('/upgrade-to-host', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'User is already a host' });
     }
 
-    user.role = 'host';
-    await user.save();
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, { role: 'host' });
 
     // Generate new JWT token with updated role
     const token = jwt.sign(
       { id: user.id, email: user.email, role: 'host' },
-      process.env.JWT_SECRET,
+      jwtSecret,
       { expiresIn: '7d' }
     );
 
@@ -153,9 +165,9 @@ router.post('/upgrade-to-host', authenticateToken, async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        name: updatedUser?.name ?? user.name,
         role: 'host',
-        avatar: user.avatar
+        avatar: updatedUser?.avatar ?? user.avatar
       }
     });
   } catch (error) {

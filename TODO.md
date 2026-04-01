@@ -1,0 +1,1 @@
+# Task: Fix Backend to Run Properly\n\n- [x] Install dependencies (backend & frontend)\n- [x] Create .env with placeholders\n- [ ] Edit server.js for graceful DB failure\n- [ ] Start servers\n- [ ] Test API endpoints\n- [ ] Optional: Setup MongoDB Atlas

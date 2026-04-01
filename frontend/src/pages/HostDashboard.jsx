@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { reverseGeocode } from '../utils/googleMaps';
 
 function parseImages(value) {
   if (value == null || value === '') return [];
@@ -126,36 +127,18 @@ function HostDashboard() {
           formData.append('latitude', latitude);
           formData.append('longitude', longitude);
 
-          // Also reverse-geocode for address/city/country
-          if (window.google?.maps?.Geocoder) {
-            const geocoder = new window.google.maps.Geocoder();
-            geocoder.geocode({ location: { lat: latitude, lng: longitude } }, async (results, status) => {
-              if (status === 'OK' && results[0]) {
-                const addr = results[0].address_components || [];
-                let city = '';
-                let country = '';
-                addr.forEach(c => {
-                  if (c.types.includes('locality')) city = c.long_name;
-                  if (c.types.includes('country')) country = c.long_name;
-                  if (!city && c.types.includes('administrative_area_level_2')) city = c.long_name;
-                });
-                if (results[0].formatted_address) formData.append('address', results[0].formatted_address);
-                if (city) formData.append('city', city);
-                if (country) formData.append('country', country);
-              }
-              await axios.put(`/api/properties/${propertyId}`, formData, {
-                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
-              });
-              toast.success('Location set successfully!');
-              fetchProperties();
-            });
-          } else {
-            await axios.put(`/api/properties/${propertyId}`, formData, {
-              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
-            });
-            toast.success('Location coordinates saved! (Address not auto-filled — Google Maps not loaded)');
-            fetchProperties();
+          const locationInfo = await reverseGeocode(latitude, longitude);
+          if (locationInfo) {
+            if (locationInfo.address) formData.append('address', locationInfo.address);
+            if (locationInfo.city) formData.append('city', locationInfo.city);
+            if (locationInfo.country) formData.append('country', locationInfo.country);
           }
+
+          await axios.put(`/api/properties/${propertyId}`, formData, {
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
+          });
+          toast.success('Location set successfully!');
+          fetchProperties();
         } catch (err) {
           console.error(err);
           toast.error('Failed to save location');

@@ -42,7 +42,10 @@ function Login() {
         }
       }, 1000);
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Login failed');
+      console.error('Login error:', err);
+      console.error('Error response:', err.response);
+      console.error('Error message:', err.message);
+      toast.error(err.response?.data?.error || err.message || 'Login failed');
     } finally {
       setLoading(false);
     }

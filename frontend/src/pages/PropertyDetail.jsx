@@ -5,6 +5,7 @@ import { differenceInCalendarDays } from 'date-fns';
 import toast from 'react-hot-toast';
 import Map from '../components/Map';
 import ImageSlider from '../components/ImageSlider';
+import { reverseGeocode } from '../utils/googleMaps';
 
 function parseJsonArray(value) {
   if (value == null || value === '') return [];
@@ -186,22 +187,12 @@ function PropertyDetail() {
           formData.append('latitude', latitude);
           formData.append('longitude', longitude);
 
-          // Reverse geocode with Google Geocoding API
           try {
-            const geoKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-            if (!geoKey) throw new Error('Missing Google Maps API key');
-            const res = await fetch(
-              `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${geoKey}`
-            );
-            const data = await res.json();
-            if (data && data.results && data.results.length > 0) {
-              const result = data.results[0];
-              const components = result.address_components || [];
-              const city = components.find(c => c.types.includes('locality'))?.long_name || '';
-              const country = components.find(c => c.types.includes('country'))?.long_name || '';
-              if (result.formatted_address) formData.append('address', result.formatted_address);
-              if (city) formData.append('city', city);
-              if (country) formData.append('country', country);
+            const locationInfo = await reverseGeocode(latitude, longitude);
+            if (locationInfo) {
+              if (locationInfo.address) formData.append('address', locationInfo.address);
+              if (locationInfo.city) formData.append('city', locationInfo.city);
+              if (locationInfo.country) formData.append('country', locationInfo.country);
             }
           } catch (geocodeErr) {
             console.error('Reverse geocoding error:', geocodeErr);
