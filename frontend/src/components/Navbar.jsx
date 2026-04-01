@@ -1,12 +1,16 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { Search, Globe, Menu, UserCircle, MapPin, Building, LogOut, LayoutDashboard } from 'lucide-react';
+import { Search, Globe, Menu, UserCircle, MapPin, Building, LogOut, LayoutDashboard, Heart, GitCompare, MessageCircle } from 'lucide-react';
+import { useWishlist } from '../context/WishlistContext';
+import { useCompare } from '../context/CompareContext';
 
 function Navbar() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const { count: wishlistCount } = useWishlist();
+  const { count: compareCount } = useCompare();
 
   const readUserFromStorage = () => {
     const token = localStorage.getItem('token');
@@ -50,48 +54,127 @@ function Navbar() {
   };
 
   return (
-    <nav className="navbar" style={{ borderBottom: '1px solid var(--neutral-100)', padding: '1rem 0', position: 'sticky', top: 0, zIndex: 100, background: 'white' }}>
+    <nav className="navbar">
       <div className="container" style={{ display: 'grid', gridTemplateColumns: 'minmax(120px, 1fr) auto minmax(120px, 1fr)', alignItems: 'center' }}>
         
         {/* 1. Logo */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'var(--primary)', fontWeight: 700, fontSize: '1.25rem' }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'var(--primary)', fontWeight: 800, fontSize: '1.25rem' }}>
           <MapPin fill="var(--primary)" color="white" size={28} />
           <span style={{ letterSpacing: '-0.5px' }}>BookMyStay</span>
         </Link>
         
         {/* 2. Search Bar placeholder */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05)',
-          borderRadius: '999px',
-          border: '1px solid var(--neutral-200)',
-          padding: '0.35rem 0.5rem 0.35rem 1.5rem',
-          transition: 'box-shadow 0.2s ease',
-          cursor: 'pointer'
-        }}
-        onClick={() => navigate('/')}
-        className="nav-search-bar"
-        >
-          <div style={{ fontWeight: 500, fontSize: '0.875rem', paddingRight: '1rem', borderRight: '1px solid var(--neutral-200)' }}>Anywhere</div>
-          <div style={{ fontWeight: 500, fontSize: '0.875rem', padding: '0 1rem', borderRight: '1px solid var(--neutral-200)' }}>Any week</div>
-          <div style={{ fontSize: '0.875rem', color: 'var(--neutral-400)', padding: '0 1rem' }}>Add guests</div>
-          <div style={{
-            background: 'var(--primary)',
-            color: 'white',
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+        <div className="nav-search-bar" onClick={() => navigate('/')}>
+          <div style={{ fontWeight: 600, fontSize: '0.875rem', paddingRight: '1rem', borderRight: '1px solid var(--neutral-200)' }}>Anywhere</div>
+          <div style={{ fontWeight: 600, fontSize: '0.875rem', padding: '0 1rem', borderRight: '1px solid var(--neutral-200)' }}>Any week</div>
+          <div style={{ fontSize: '0.875rem', color: 'var(--neutral-400)', padding: '0 1rem', fontWeight: 500 }}>Add guests</div>
+          <div className="search-btn-icon">
             <Search size={14} strokeWidth={3} />
           </div>
         </div>
 
         {/* 3. User Menu */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem' }}>
+          {/* Wishlist Link - visible when logged in */}
+          {user && (
+            <Link 
+              to="/wishlist"
+              style={{ 
+                position: 'relative',
+                padding: '0.75rem', 
+                borderRadius: '50%', 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                transition: 'background 0.2s',
+                color: 'var(--neutral-600)',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--neutral-50)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              title="Wishlist"
+            >
+              <Heart size={20} />
+              {wishlistCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '4px',
+                  right: '4px',
+                  background: 'var(--primary)',
+                  color: 'white',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  padding: '2px 6px',
+                  borderRadius: '999px',
+                  minWidth: '18px',
+                  textAlign: 'center'
+                }}>
+                  {wishlistCount > 9 ? '9+' : wishlistCount}
+                </span>
+              )}
+            </Link>
+          )}
+
+          {/* Compare Link */}
+          <Link 
+            to="/compare"
+            style={{ 
+              position: 'relative',
+              padding: '0.75rem', 
+              borderRadius: '50%', 
+              cursor: 'pointer', 
+              display: 'flex', 
+              alignItems: 'center', 
+              transition: 'background 0.2s',
+              color: 'var(--neutral-600)',
+              textDecoration: 'none'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--neutral-50)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+            title="Compare"
+          >
+            <GitCompare size={20} />
+            {compareCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '4px',
+                right: '4px',
+                background: 'var(--secondary)',
+                color: 'white',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                padding: '2px 6px',
+                borderRadius: '999px',
+                minWidth: '18px',
+                textAlign: 'center'
+              }}>
+                {compareCount > 9 ? '9+' : compareCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Messages Link - visible when logged in */}
+          {user && (
+            <Link 
+              to="/messages"
+              style={{ 
+                padding: '0.75rem', 
+                borderRadius: '50%', 
+                cursor: 'pointer', 
+                display: 'flex', 
+                alignItems: 'center', 
+                transition: 'background 0.2s',
+                color: 'var(--neutral-600)',
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--neutral-50)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+              title="Messages"
+            >
+              <MessageCircle size={20} />
+            </Link>
+          )}
+
           {(!user || user.role === 'guest') && (
             <Link 
               to={user ? "/host/onboarding" : "/signup"} 

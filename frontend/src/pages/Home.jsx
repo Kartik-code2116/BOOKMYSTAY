@@ -42,9 +42,24 @@ function Home() {
     <div>
       {/* Hero Section */}
       <div className="hero">
-        <div className="container">
+        <div className="hero-bg-gradient" />
+        <div className="container hero-content">
           <h1>Find Your Perfect Stay</h1>
-          <p>Discover amazing places to stay around the world</p>
+          <p>Discover amazing places to stay around the world. From cozy cabins to luxury villas, find the perfect getaway for your next adventure.</p>
+          <div className="hero-stats">
+            <div className="hero-stat">
+              <span className="hero-stat-number">500K+</span>
+              <span className="hero-stat-label">Active Listings</span>
+            </div>
+            <div className="hero-stat">
+              <span className="hero-stat-number">1M+</span>
+              <span className="hero-stat-label">Happy Guests</span>
+            </div>
+            <div className="hero-stat">
+              <span className="hero-stat-number">190+</span>
+              <span className="hero-stat-label">Countries</span>
+            </div>
+          </div>
         </div>
       </div>
 

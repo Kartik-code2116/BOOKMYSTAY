@@ -8,6 +8,8 @@ import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 import App from './App';
 import './index.css';
+import { WishlistProvider } from './context/WishlistContext';
+import { CompareProvider } from './context/CompareContext';
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: markerIcon2x,
@@ -18,7 +20,11 @@ L.Icon.Default.mergeOptions({
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <WishlistProvider>
+        <CompareProvider>
+          <App />
+        </CompareProvider>
+      </WishlistProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

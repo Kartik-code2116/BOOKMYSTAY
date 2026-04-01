@@ -16,7 +16,11 @@ const propertySchema = new mongoose.Schema({
   latitude: { type: Number, default: null },
   longitude: { type: Number, default: null },
   amenities: { type: [String], default: [] },
-  images: { type: [String], default: [] }
+  images: { type: [String], default: [] },
+  room_summary: { type: String, default: '' },
+  offer_discount_percent: { type: Number, default: 0, min: 0, max: 90 },
+  offer_label: { type: String, default: '' },
+  offer_expires_at: { type: Date, default: null }
 }, baseSchemaOptions);
 
 propertySchema.index({ city: 1 });

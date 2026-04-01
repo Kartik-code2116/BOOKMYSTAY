@@ -11,6 +11,7 @@ import bookingRoutes from './routes/bookingRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import hostRoutes from './routes/hostRoutes.js';
+import messageRoutes from './routes/messageRoutes.js';
 
 // Import database connection
 import mongoose, { connectDB, isMongoConnected } from './config/db.js';
@@ -48,6 +49,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/host', hostRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Health check endpoint
 app.get('/api', (req, res) => {

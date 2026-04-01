@@ -5,6 +5,7 @@ import { authenticateToken } from '../middleware/authMiddleware.js';
 import Property from '../models/Property.js';
 import Booking from '../models/Booking.js';
 import Payment from '../models/Payment.js';
+import { getNightlyPriceBreakdown, computeStayTotal } from '../utils/pricing.js';
 
 const router = express.Router();
 
@@ -64,7 +65,8 @@ router.post('/create-order', authenticateToken, async (req, res) => {
     }
 
     const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
-    const totalPrice = nights * property.price_per_night;
+    const { effectiveNightly } = getNightlyPriceBreakdown(property);
+    const totalPrice = computeStayTotal(effectiveNightly, nights);
     const amountPaise = Math.round(totalPrice * 100); // INR to paise
 
     if (amountPaise < 100) {
@@ -82,7 +84,8 @@ router.post('/create-order', authenticateToken, async (req, res) => {
       amount: totalPrice,
       amountPaise,
       currency: 'INR',
-      nights
+      nights,
+      nightly_rate: effectiveNightly
     });
   } catch (error) {
     console.error('Create order error:', error);
@@ -134,7 +137,8 @@ router.post('/verify', authenticateToken, async (req, res) => {
     }
 
     const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
-    const totalPrice = nights * property.price_per_night;
+    const { effectiveNightly } = getNightlyPriceBreakdown(property);
+    const totalPrice = computeStayTotal(effectiveNightly, nights);
 
     const booking = await Booking.create({
       property_id: property._id,
@@ -163,6 +167,48 @@ router.post('/verify', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Verify payment error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Payment history for current guest
+router.get('/history', authenticateToken, async (req, res) => {
+  try {
+    const bookings = await Booking.find({ guest_id: req.user.id }).select('_id').lean();
+    const bookingIds = bookings.map((b) => b._id);
+
+    const payments = await Payment.find({ booking_id: { $in: bookingIds } })
+      .sort({ created_at: -1 })
+      .populate({
+        path: 'booking_id',
+        select: 'check_in check_out total_price guests_count status property_id',
+        populate: { path: 'property_id', select: 'title city country images' }
+      })
+      .lean({ virtuals: true });
+
+    const rows = payments.map((p) => {
+      const b = p.booking_id;
+      const prop = b?.property_id;
+      return {
+        id: p._id.toString(),
+        amount: p.amount,
+        currency: p.currency,
+        status: p.status,
+        razorpay_payment_id: p.razorpay_payment_id,
+        created_at: p.created_at,
+        booking_id: b?._id?.toString() || null,
+        check_in: b?.check_in,
+        check_out: b?.check_out,
+        booking_status: b?.status,
+        property_title: prop?.title || null,
+        property_city: prop?.city || null,
+        property_country: prop?.country || null
+      };
+    });
+
+    res.json(rows);
+  } catch (err) {
+    console.error('Payment history error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

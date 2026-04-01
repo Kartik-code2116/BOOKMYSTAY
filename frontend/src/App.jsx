@@ -10,6 +10,9 @@ import HostDashboard from './pages/HostDashboard';
 import HostOnboarding from './pages/HostOnboarding';
 import AddProperty from './pages/AddProperty';
 import EditProperty from './pages/EditProperty';
+import Wishlist from './pages/Wishlist';
+import Compare from './pages/Compare';
+import Messages from './pages/Messages';
 
 import { Toaster } from 'react-hot-toast';
 
@@ -28,6 +31,9 @@ function App() {
         <Route path="/host/dashboard" element={<HostDashboard />} />
         <Route path="/host/add-property" element={<AddProperty />} />
         <Route path="/host/edit-property/:id" element={<EditProperty />} />
+        <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/compare" element={<Compare />} />
+        <Route path="/messages" element={<Messages />} />
       </Routes>
       <Footer />
     </div>

@@ -6,6 +6,7 @@ import Property from '../models/Property.js';
 import Booking from '../models/Booking.js';
 import Review from '../models/Review.js';
 import Payment from '../models/Payment.js';
+import { getNightlyPriceBreakdown } from '../utils/pricing.js';
 
 const router = express.Router();
 
@@ -44,7 +45,7 @@ const normalizeProperty = (property, stats) => {
   delete base.host_id;
   delete base.id;
 
-  return {
+  const merged = {
     id,
     ...base,
     host_id: host._id ? host._id.toString() : host?.toString?.() ?? null,
@@ -53,6 +54,13 @@ const normalizeProperty = (property, stats) => {
     host_avatar: host.avatar || null,
     avg_rating: stat.avg_rating || 0,
     review_count: stat.review_count || 0
+  };
+  const { baseNightly, discountPercent, effectiveNightly, offerActive } = getNightlyPriceBreakdown(merged);
+  return {
+    ...merged,
+    offer_active: offerActive,
+    effective_price_per_night: effectiveNightly,
+    you_save_per_night: offerActive ? Math.round((baseNightly - effectiveNightly) * 100) / 100 : 0
   };
 };
 
@@ -169,7 +177,8 @@ router.post('/', authenticateToken, isHost, upload.array('images', 10), async (r
     const {
       title, description, property_type, price_per_night,
       bedrooms, bathrooms, max_guests, address, city, country,
-      latitude, longitude, amenities
+      latitude, longitude, amenities,
+      room_summary, offer_discount_percent, offer_label, offer_expires_at
     } = req.body;
 
     // Validate required fields
@@ -190,6 +199,10 @@ router.post('/', authenticateToken, isHost, upload.array('images', 10), async (r
       }
     }
 
+    const offerPct = offer_discount_percent != null && offer_discount_percent !== ''
+      ? Math.min(90, Math.max(0, parseFloat(offer_discount_percent)))
+      : 0;
+
     const property = await Property.create({
       host_id: req.user.id,
       title,
@@ -205,7 +218,11 @@ router.post('/', authenticateToken, isHost, upload.array('images', 10), async (r
       latitude: latitude ? parseFloat(latitude) : null,
       longitude: longitude ? parseFloat(longitude) : null,
       amenities: amenitiesArray || [],
-      images
+      images,
+      room_summary: room_summary || '',
+      offer_discount_percent: offerPct,
+      offer_label: offer_label || '',
+      offer_expires_at: offer_expires_at ? new Date(offer_expires_at) : null
     });
 
     res.status(201).json({
@@ -234,7 +251,8 @@ router.put('/:id', authenticateToken, isHost, upload.array('images', 10), async 
     const {
       title, description, property_type, price_per_night,
       bedrooms, bathrooms, max_guests, address, city, country,
-      latitude, longitude, amenities
+      latitude, longitude, amenities,
+      room_summary, offer_discount_percent, offer_label, offer_expires_at
     } = req.body;
 
     const newImages = req.files ? req.files.map((file) => file.filename) : [];
@@ -260,6 +278,16 @@ router.put('/:id', authenticateToken, isHost, upload.array('images', 10), async 
       }
     }
 
+    const offerSet = {};
+    if (offer_discount_percent !== undefined && offer_discount_percent !== '') {
+      offerSet.offer_discount_percent = Math.min(90, Math.max(0, parseFloat(offer_discount_percent)));
+    }
+    if (offer_label !== undefined) offerSet.offer_label = offer_label || '';
+    if (offer_expires_at !== undefined) {
+      offerSet.offer_expires_at = offer_expires_at ? new Date(offer_expires_at) : null;
+    }
+    if (room_summary !== undefined) offerSet.room_summary = room_summary || '';
+
     await Property.findByIdAndUpdate(req.params.id, {
       $set: {
         title: title ?? property.title,
@@ -275,7 +303,8 @@ router.put('/:id', authenticateToken, isHost, upload.array('images', 10), async 
         latitude: latitude ? parseFloat(latitude) : property.latitude,
         longitude: longitude ? parseFloat(longitude) : property.longitude,
         amenities: amenitiesVal ?? property.amenities,
-        images: updatedImages
+        images: updatedImages,
+        ...offerSet
       }
     });
 
