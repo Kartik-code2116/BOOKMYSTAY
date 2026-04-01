@@ -320,7 +320,7 @@ function PropertyDetail() {
 
         {/* Booking Card */}
         <div style={{ position: 'sticky', top: '100px' }}>
-          <div className="card">
+          <div className="glass-panel">
             <div style={{ marginBottom: 'var(--spacing-lg)' }}>
               <span style={{ fontSize: '1.5rem', fontWeight: '700' }}>
                 ₹{property.price_per_night}

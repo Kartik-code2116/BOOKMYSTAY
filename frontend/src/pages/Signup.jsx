@@ -70,7 +70,7 @@ function Signup() {
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Create an account</h2>
         </div>
 
-        <div className="card" style={{ padding: 'var(--spacing-xl)' }}>
+        <div className="glass-panel" style={{ padding: 'var(--spacing-xl)' }}>
           <form onSubmit={handleSubmit}>
             
             {/* Role Selection Segmented Control */}
